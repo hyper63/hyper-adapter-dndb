@@ -1,4 +1,5 @@
-name: Test DnDB Adapter
+name: Test
+
 on:
   push:
     branches-ignore: main
