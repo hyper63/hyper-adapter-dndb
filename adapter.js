@@ -44,8 +44,8 @@ export function adapter(_env, Datastore) {
       db = new Datastore({ filename: `./${db}.db` });
       // swap ids
       doc = toInternalId(doc);
-      const result = await db.updateOne({ _id: id }, { $set: doc });
-      return Promise.resolve({ ok: equals(doc, result) });
+      await db.updateOne({ _id: id }, { $set: doc });
+      return Promise.resolve({ ok: true });
     },
     removeDocument: async ({ db, id }) => {
       db = new Datastore({ filename: `./${db}.db` });
