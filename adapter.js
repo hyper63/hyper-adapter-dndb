@@ -3,7 +3,20 @@
 import { cuid, R } from "./deps.js";
 import { bulk } from "./bulk.js";
 
-const { assoc, compose, equals, omit } = R;
+const {
+  __,
+  assoc,
+  compose,
+  equals,
+  filter,
+  gt,
+  gte,
+  includes,
+  omit,
+  propSatisfies,
+  reject,
+  take,
+} = R;
 const toInternalId = compose(omit(["id"]), (doc) => assoc("_id", doc.id, doc));
 
 let db = null;
@@ -53,9 +66,27 @@ export function adapter(_env, Datastore) {
       if (!result) return Promise.resolve({ ok: false, message: "not found" });
       return Promise.resolve({ ok: equals(result._id, id) });
     },
-    listDocuments: async ({ db }) => {
+    listDocuments: async (d) => {
+      let { db } = d;
       db = new Datastore({ filename: `./${db}.db` });
-      const results = await db.find();
+      let results = await db.find();
+
+      if (d.keys) {
+        results = filter(({ _id }) => includes(_id, d.keys), results)
+      }
+
+      if (d.start) {
+        results = filter(propSatisfies(gte(__, d.start), "_id"), results);
+      }
+      if (d.end) {
+        results = reject(propSatisfies(gt(__, d.end), "_id"), results);
+      }
+      // handle limit argument
+      if (d.limit) {
+        results = take(Number(d.limit), results);
+      }
+
+
       return Promise.resolve({ ok: true, docs: results });
     },
     queryDocuments: async ({ db, query }) => {
