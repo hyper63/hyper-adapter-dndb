@@ -13,6 +13,7 @@ const {
   gte,
   includes,
   omit,
+  propOr,
   propSatisfies,
   reject,
   take,
@@ -20,13 +21,15 @@ const {
 const toInternalId = compose(omit(["id"]), (doc) => assoc("_id", doc.id, doc));
 
 let db = null;
-export function adapter(_env, Datastore) {
+export function adapter(env, Datastore) {
   // create _system json file to hold all db names
+  const dataDir = propOr(".", "dir", env);
+  const dbFullname = (n) => `${dataDir}/${n}.db`;
 
   return Object.freeze({
     createDatabase: (name) => {
       try {
-        db = new Datastore({ filename: `./${name}.db`, autoload: true });
+        db = new Datastore({ filename: dbFullname(name), autoload: true });
       } catch (e) {
         return Promise.resolve({ ok: false, message: e.message });
       }
@@ -35,44 +38,44 @@ export function adapter(_env, Datastore) {
     removeDatabase: async (name) => {
       // todo delete file if exists
       try {
-        await Deno.remove(`./${name}.db`);
+        await Deno.remove(dbFullname(name));
       } catch (e) {
         console.log(e.message);
       }
       return Promise.resolve({ ok: true });
     },
     createDocument: async ({ db, id, doc }) => {
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       doc._id = id || cuid();
       const result = await db.insert(doc);
       return Promise.resolve({ ok: equals(result, doc), id: result._id });
     },
     retrieveDocument: async ({ db, id }) => {
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       const doc = await db.findOne({ _id: id });
       // swap ids
       return Promise.resolve(compose(omit(["_id"]), assoc("id", doc._id))(doc));
     },
     updateDocument: async ({ db, id, doc }) => {
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       // swap ids
       doc = toInternalId(doc);
       await db.updateOne({ _id: id }, { $set: doc });
       return Promise.resolve({ ok: true });
     },
     removeDocument: async ({ db, id }) => {
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       const result = await db.removeOne({ _id: id });
       if (!result) return Promise.resolve({ ok: false, message: "not found" });
       return Promise.resolve({ ok: equals(result._id, id) });
     },
     listDocuments: async (d) => {
       let { db } = d;
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       let results = await db.find();
 
       if (d.keys) {
-        results = filter(({ _id }) => includes(_id, d.keys), results)
+        results = filter(({ _id }) => includes(_id, d.keys), results);
       }
 
       if (d.start) {
@@ -86,11 +89,10 @@ export function adapter(_env, Datastore) {
         results = take(Number(d.limit), results);
       }
 
-
       return Promise.resolve({ ok: true, docs: results });
     },
     queryDocuments: async ({ db, query }) => {
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       const results = await db.find(query.selector);
       return Promise.resolve({ ok: true, docs: results });
     },
@@ -101,7 +103,7 @@ export function adapter(_env, Datastore) {
       return Promise.resolve({ ok: true });
     },
     bulkDocuments: ({ db, docs }) => {
-      db = new Datastore({ filename: `./${db}.db` });
+      db = new Datastore({ filename: dbFullname(db) });
       return bulk({ db, docs })
         .map((results) => ({ ok: true, results }))
         .toPromise();
