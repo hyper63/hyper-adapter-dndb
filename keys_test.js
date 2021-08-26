@@ -73,7 +73,7 @@ const test = Deno.test;
 const a = adapter({ filename: "./test.db" }, Datastore);
 
 test("keys with adapter", async () => {
-  const res = await a.listDocuments({ keys: ["1", "3", "5"] });
+  const res = await a.listDocuments({ db: "foo", keys: ["1", "3", "5"] });
   assertEquals(res.docs.length, 3);
   assertEquals(res.docs[0]._id, "1");
   assertEquals(res.docs[2]._id, "5");

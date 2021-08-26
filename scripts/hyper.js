@@ -6,6 +6,6 @@ hyper({
   app,
   adapters: [{
     port: "data",
-    plugins: [dndb({dir: '.'})],
+    plugins: [dndb({ dir: "." })],
   }],
 });
