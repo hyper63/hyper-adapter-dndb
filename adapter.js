@@ -50,6 +50,9 @@ export function adapter(env, Datastore) {
       }
       db = new Datastore({ filename: dbFullname(db) });
       doc._id = id || cuid();
+      const exists = await db.findOne({ _id: id })
+      console.log(exists)
+      if (exists) { return Promise.reject({ ok: false, status: 409, msg: 'document conflict' }) }
       const result = await db.insert(doc);
       return Promise.resolve({ ok: equals(result, doc), id: result._id });
     },
