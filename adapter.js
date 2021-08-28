@@ -79,7 +79,7 @@ export function adapter(env, Datastore) {
       db = new Datastore({ filename: dbFullname(db) });
       const result = await db.removeOne({ _id: id });
       if (!result) return Promise.resolve({ ok: false, message: "not found" });
-      return Promise.resolve({ ok: equals(result._id, id) });
+      return Promise.resolve({ ok: equals(result._id, id), id });
     },
     listDocuments: async (d) => {
       let { db } = d;
