@@ -2,4 +2,4 @@
 
 deno lint
 deno fmt --check
-deno test --allow-env --allow-read --allow-write --unstable
+DENO_ENV=test deno test --allow-env --allow-read --allow-write --unstable

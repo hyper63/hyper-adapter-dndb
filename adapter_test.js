@@ -6,13 +6,16 @@ import { assertEquals } from "./dev_deps.js";
 function Datastore(config) {
   return Object.freeze({
     insert: (doc) => Promise.resolve(doc),
-    findOne: ({ _id }) => _id === "1" ? Promise.resolve({ _id: "1", hello: "world" }) : Promise.resolve(null),
+    findOne: ({ _id }) =>
+      _id === "1"
+        ? Promise.resolve({ _id: "1", hello: "world" })
+        : Promise.resolve(null),
     updateOne: (criteria, action) =>
       Promise.resolve({ _id: "1", hello: "moon" }),
     removeOne: (o) => Promise.resolve(o),
     find: () => Promise.resolve([]),
     update: (criteria, action) => Promise.resolve(action.$set),
-    remove: (critera) => Promise.resolve({ ok: true })
+    remove: (critera) => Promise.resolve({ ok: true }),
   });
 }
 
