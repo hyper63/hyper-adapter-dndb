@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-unused-vars
 
-import { cuid, R } from "./deps.js";
+import { cuid, existsSync, R } from "./deps.js";
 import { bulk } from "./bulk.js";
 
 const {
@@ -45,15 +45,24 @@ export function adapter(env, Datastore) {
       return Promise.resolve({ ok: true });
     },
     createDocument: async ({ db, id, doc }) => {
-      try {
-        db = new Datastore({ filename: dbFullname(db) });
-      } catch (e) {
+      const dbFile = dbFullname(db);
+      if (!existsSync(dbFile)) {
         return Promise.reject({
           ok: false,
           status: 404,
           msg: "database not found!",
         });
       }
+      // try {
+      //   db = new Datastore({ filename: dbFullname(db) });
+      // } catch (e) {
+      //   return Promise.reject({
+      //     ok: false,
+      //     status: 404,
+      //     msg: "database not found!",
+      //   });
+      // }
+      db = new Datastore({ filename: dbFullname(db) });
       doc._id = id || cuid();
       const exists = await db.findOne({ _id: id });
       console.log(exists);
