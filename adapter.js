@@ -1,51 +1,97 @@
 // deno-lint-ignore-file no-unused-vars
 
-import { cuid, existsSync, R } from "./deps.js";
+import { crocks, existsSync, R } from "./deps.js";
 import { bulk } from "./bulk.js";
+import {
+  dbFullname,
+  doFind,
+  doFindOne,
+  doInsert,
+  doRemoveOne,
+  doUpdateOne,
+  formatError,
+  handleExists,
+  loadDb,
+  mapResult,
+  removeDb,
+  setId,
+  swap,
+} from "./utils.js";
 
 const ENV = Deno.env.get("DENO_ENV");
 const {
   __,
-  assoc,
-  compose,
-  equals,
+  always,
   filter,
   gt,
   gte,
   includes,
-  omit,
-  propOr,
   propSatisfies,
   reject,
   take,
 } = R;
-const toInternalId = compose(omit(["id"]), (doc) => assoc("_id", doc.id, doc));
+const { Async } = crocks;
 
-let db = null;
 export function adapter(env, Datastore) {
-  // create _system json file to hold all db names
-  const dataDir = propOr(".", "dir", env);
-  const dbFullname = (n) => `${dataDir}/${n}.db`;
+  // helper functions
+  const getDbFile = dbFullname(env);
+  const doloadDb = loadDb(env, Datastore);
 
   return Object.freeze({
-    createDatabase: (name) => {
-      try {
-        db = new Datastore({ filename: dbFullname(name), autoload: true });
-      } catch (e) {
-        return Promise.resolve({ ok: false, message: e.message });
-      }
-      return Promise.resolve({ ok: true });
-    },
-    removeDatabase: async (name) => {
-      // todo delete file if exists
-      try {
-        await Deno.remove(dbFullname(name));
-      } catch (e) {
-        console.log(e.message);
-      }
-      return Promise.resolve({ ok: true });
-    },
-    createDocument: async ({ db, id, doc }) => {
+    createDatabase: (name) =>
+      doloadDb(name)
+        .bimap(formatError, always({ ok: true }))
+        .toPromise(),
+    removeDatabase: (name) =>
+      Async.of(name)
+        .map(getDbFile)
+        .chain(removeDb)
+        .bimap(formatError, always({ ok: true }))
+        .toPromise(),
+    createDocument: ({ db, id, doc }) =>
+      Async.of(db)
+        .map(getDbFile)
+        .chain(doloadDb)
+        .map(setId(id, doc))
+        .chain(handleExists)
+        .chain(doInsert)
+        .map(mapResult)
+        .toPromise(),
+    retrieveDocument: ({ db, id }) =>
+      Async.of(db)
+        .map(getDbFile)
+        .chain(doloadDb)
+        .chain(doFindOne(id))
+        .map(swap("_id", "id"))
+        .toPromise(),
+    updateDocument: ({ db, id, doc }) =>
+      Async.of(db)
+        .map(getDbFile)
+        .chain(doloadDb)
+        .chain(doUpdateOne(id, swap("id", "_id")(doc)))
+        .map(always({ ok: true }))
+        .toPromise(),
+    removeDocument: ({ db, id }) =>
+      Async.of(db)
+        .map(getDbFile)
+        .chain(doloadDb)
+        .chain(doRemoveOne(id))
+        .map(always({ ok: true, id }))
+        .toPromise(),
+    queryDocuments: ({ db, query }) =>
+      Async.of(db)
+        .map(getDbFile)
+        .chain(doloadDb)
+        .chain(doFind(query))
+        .map((docs) => ({ ok: true, docs }))
+        .toPromise(),
+    indexDocuments: ({ db, name, fields }) =>
+      Async.of(db)
+        .map(getDbFile)
+        .chain(doloadDb)
+        .map(always({ ok: true }))
+        .toPromise(),
+    bulkDocuments: ({ db, docs }) => {
       const dbFile = dbFullname(db);
       if (ENV !== "test" && !existsSync(dbFile)) {
         return Promise.reject({
@@ -54,62 +100,14 @@ export function adapter(env, Datastore) {
           msg: "database not found!",
         });
       }
-      db = new Datastore({ filename: dbFullname(db) });
-      doc._id = id || cuid();
-      const exists = await db.findOne({ _id: id });
-      console.log(exists);
-      if (exists) {
-        return Promise.reject({
-          ok: false,
-          status: 409,
-          msg: "document conflict",
-        });
-      }
-      const result = await db.insert(doc);
-      return Promise.resolve({ ok: equals(result, doc), id: result._id });
-    },
-    retrieveDocument: async ({ db, id }) => {
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFullname(db) });
-      const doc = await db.findOne({ _id: id });
-      // swap ids
-      return Promise.resolve(compose(omit(["_id"]), assoc("id", doc._id))(doc));
-    },
-    updateDocument: async ({ db, id, doc }) => {
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFullname(db) });
-      // swap ids
-      doc = toInternalId(doc);
-      await db.updateOne({ _id: id }, { $set: doc });
-      return Promise.resolve({ ok: true });
-    },
-    removeDocument: async ({ db, id }) => {
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFullname(db) });
-      const result = await db.removeOne({ _id: id });
-      if (!result) return Promise.resolve({ ok: false, message: "not found" });
-      return Promise.resolve({ ok: equals(result._id, id), id });
+      db = new Datastore({ filename: dbFile });
+      return bulk({ db, docs })
+        .map((results) => ({ ok: true, results }))
+        .toPromise();
     },
     listDocuments: async (d) => {
       let { db } = d;
+      const dbFile = dbFullname(db);
       if (ENV !== "test" && !existsSync(dbFile)) {
         return Promise.reject({
           ok: false,
@@ -117,7 +115,7 @@ export function adapter(env, Datastore) {
           msg: "database not found!",
         });
       }
-      db = new Datastore({ filename: dbFullname(db) });
+      db = new Datastore({ filename: dbFile });
       let results = await db.find();
 
       if (d.keys) {
@@ -136,44 +134,6 @@ export function adapter(env, Datastore) {
       }
 
       return Promise.resolve({ ok: true, docs: results });
-    },
-    queryDocuments: async ({ db, query }) => {
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFullname(db) });
-      const results = await db.find(query.selector);
-      return Promise.resolve({ ok: true, docs: results });
-    },
-    indexDocuments: ({ db, name, fields }) => {
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      // noop - db is not built for
-      // optimizability yet! will add this when
-      // supported
-      return Promise.resolve({ ok: true });
-    },
-    bulkDocuments: ({ db, docs }) => {
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFullname(db) });
-      return bulk({ db, docs })
-        .map((results) => ({ ok: true, results }))
-        .toPromise();
     },
   });
 }
