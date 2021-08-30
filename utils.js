@@ -1,4 +1,6 @@
-import { crocks, cuid, R, existsSync } from "./deps.js";
+import { crocks, cuid, existsSync, R } from "./deps.js";
+
+const ENV = Deno.env.get("DENO_ENV");
 
 const {
   assoc,
@@ -11,7 +13,10 @@ const {
 const { Async, tryCatch, resultToAsync } = crocks;
 
 // pure functions
-export const checkIfExists = n => existsSync(n) ? Async.Resolved(n) : Async.Rejected({ ok: false, status: 400, msg: 'Database not found!' })
+export const checkIfExists = (n) =>
+  ENV === "test" || existsSync(n)
+    ? Async.Resolved(n)
+    : Async.Rejected({ ok: false, status: 400, msg: "Database not found!" });
 
 export const swap = (a, b) =>
   compose(omit([a]), (doc) => assoc(b, doc[a], doc));
