@@ -3,6 +3,7 @@
 import { crocks, existsSync, R } from "./deps.js";
 import { bulk } from "./bulk.js";
 import {
+  checkDoc,
   dbFullname,
   doFind,
   doFindOne,
@@ -50,7 +51,7 @@ export function adapter(env, Datastore) {
         .toPromise(),
     createDocument: ({ db, id, doc }) =>
       Async.of(db)
-        .map(getDbFile)
+        .chain(checkDoc(doc))
         .chain(doloadDb)
         .map(setId(id, doc))
         .chain(handleExists)
@@ -59,28 +60,25 @@ export function adapter(env, Datastore) {
         .toPromise(),
     retrieveDocument: ({ db, id }) =>
       Async.of(db)
-        .map(getDbFile)
         .chain(doloadDb)
         .chain(doFindOne(id))
         .map(swap("_id", "id"))
         .toPromise(),
     updateDocument: ({ db, id, doc }) =>
       Async.of(db)
-        .map(getDbFile)
+        .chain(checkDoc(doc))
         .chain(doloadDb)
         .chain(doUpdateOne(id, swap("id", "_id")(doc)))
         .map(always({ ok: true }))
         .toPromise(),
     removeDocument: ({ db, id }) =>
       Async.of(db)
-        .map(getDbFile)
         .chain(doloadDb)
         .chain(doRemoveOne(id))
         .map(always({ ok: true, id }))
         .toPromise(),
     queryDocuments: ({ db, query }) =>
       Async.of(db)
-        .map(getDbFile)
         .chain(doloadDb)
         .chain(doFind(query))
         .map((docs) => ({ ok: true, docs }))

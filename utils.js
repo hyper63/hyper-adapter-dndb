@@ -5,6 +5,7 @@ const {
   compose,
   omit,
   propOr,
+  isEmpty,
 } = R;
 
 const { Async, tryCatch, resultToAsync } = crocks;
@@ -52,3 +53,13 @@ export const loadDb = (env, Datastore) =>
           ),
         ),
       );
+
+export const checkDoc = (doc) =>
+  (db) =>
+    isEmpty(doc)
+      ? Async.Rejected({
+        ok: false,
+        status: 400,
+        msg: "empty document not allowed",
+      })
+      : Async.Resolved(db);
