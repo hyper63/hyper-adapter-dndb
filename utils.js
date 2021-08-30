@@ -40,7 +40,16 @@ export const setId = (id, doc) =>
 export const doInsert = ({ db, doc }) => $(db, "insert")(doc);
 export const doFind = (query) => (db) => $(db, "find")(query.selector);
 // find one document
-export const doFindOne = (id) => (db) => $(db, "findOne")({ _id: id });
+export const doFindOne = (id) =>
+  (db) =>
+    $(db, "findOne")({ _id: id })
+      .chain((doc) =>
+        doc ? Async.Resolved(doc) : Async.Rejected({
+          ok: false,
+          status: 404,
+          msg: "Document not found!",
+        })
+      );
 // update one document
 export const doUpdateOne = (id, doc) =>
   (db) => $(db, "updateOne")({ _id: id }, { $set: doc });
