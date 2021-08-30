@@ -1,4 +1,4 @@
-import { crocks, cuid, R } from "./deps.js";
+import { crocks, cuid, R, existsSync } from "./deps.js";
 
 const {
   assoc,
@@ -11,6 +11,8 @@ const {
 const { Async, tryCatch, resultToAsync } = crocks;
 
 // pure functions
+export const checkIfExists = n => existsSync(n) ? Async.Resolved(n) : Async.Rejected({ ok: false, status: 400, msg: 'Database not found!' })
+
 export const swap = (a, b) =>
   compose(omit([a]), (doc) => assoc(b, doc[a], doc));
 export const removeDb = (name) =>
@@ -43,14 +45,24 @@ export const mapResult = (result) => ({ ok: true, id: result._id });
 
 export const dbFullname = (env) => (n) => `${propOr(".", "dir", env)}/${n}.db`;
 
+export const createDb = (env, Datastore) =>
+  (name) =>
+    Async.of(name)
+      .map(dbFullname(env))
+      .chain(
+        resultToAsync(
+          tryCatch((fn) => new Datastore({ filename: fn, autoload: true })),
+        ),
+      );
+
 export const loadDb = (env, Datastore) =>
   (name) =>
     Async.of(name)
+      .map(dbFullname(env))
+      .chain(checkIfExists)
       .chain(
         resultToAsync(
-          tryCatch(() =>
-            new Datastore({ filename: dbFullname(env)(name), autoload: true })
-          ),
+          tryCatch((fn) => new Datastore({ filename: fn })),
         ),
       );
 

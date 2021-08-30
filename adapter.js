@@ -4,6 +4,7 @@ import { crocks, existsSync, R } from "./deps.js";
 import { bulk } from "./bulk.js";
 import {
   checkDoc,
+  createDb,
   dbFullname,
   doFind,
   doFindOne,
@@ -37,10 +38,11 @@ export function adapter(env, Datastore) {
   // helper functions
   const getDbFile = dbFullname(env);
   const doloadDb = loadDb(env, Datastore);
+  const doCreateDb = createDb(env, Datastore);
 
   return Object.freeze({
     createDatabase: (name) =>
-      doloadDb(name)
+      doCreateDb(name)
         .bimap(formatError, always({ ok: true }))
         .toPromise(),
     removeDatabase: (name) =>
