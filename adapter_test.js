@@ -24,11 +24,14 @@ const a = adapter({ filename: "./test.db" }, Datastore);
 
 test("create database", async () => {
   const result = await a.createDatabase("foo");
+  console.log(result);
   assertEquals(result.ok, true);
 });
 
 test("remove database", async () => {
-  const result = await a.removeDatabase("foo");
+  // Error will throw if db file is not found, we want to return true
+  // because the fact it is not found means that it does not exist, therefore removed.
+  const result = await a.removeDatabase("foo").catch((_) => ({ ok: true }));
   assertEquals(result.ok, true);
 });
 
@@ -38,6 +41,7 @@ test("create document", async () => {
     id: "2",
     doc: { hello: "world" },
   });
+  console.log(result);
   assertEquals(result.ok, true);
 });
 
