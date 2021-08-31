@@ -31,6 +31,8 @@ const {
   __,
   always,
   map,
+  over,
+  lensProp,
   filter,
   gt,
   gte,
@@ -113,8 +115,10 @@ export function adapter(env, Datastore) {
     bulkDocuments: ({ db, docs }) =>
       Async.of(db)
         .chain(doloadDb)
-        .chain(db => bulk({ db, docs }))
+        .map((db) => ({ db, docs }))
+        .map(over(lensProp("docs"), map(swap("id", "_id"))))
+        .chain(bulk)
         .map((results) => ({ ok: true, results }))
-        .toPromise()
+        .toPromise(),
   });
 }

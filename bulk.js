@@ -16,15 +16,12 @@ const {
 } = R;
 const { Async } = crocks;
 
-const toInternalId = compose(omit(["id"]), (doc) => assoc("_id", doc.id, doc));
-
 export function bulk({ db, docs }) {
   const remove = (doc) =>
-    compose(
-      map((r) => ({ ok: true, id: doc._id, deleted: true })),
-      Async.fromPromise(db.remove.bind(db)),
-      pick(["_id"]),
-    )(doc);
+    Async.of(doc)
+      .map(pick(["_id"]))
+      .chain(Async.fromPromise(db.removeOne.bind(db)))
+      .map((r) => ({ ok: true, id: doc._id, deleted: true }));
 
   const isDeleted = propEq("_deleted", true);
   const isNew = propEq("_new", true);
@@ -40,10 +37,9 @@ export function bulk({ db, docs }) {
 
   const findOne = Async.fromPromise(db.findOne.bind(db));
   const flagNew = (doc) =>
-    ifElse(isNil, () => assoc("_new", true, doc), identity);
+    ifElse(isNil, () => assoc("_new", true, doc), () => doc);
 
   return Async.of(docs)
-    .map(map(toInternalId))
     // findAll updates
     .chain(compose(
       Async.all,
