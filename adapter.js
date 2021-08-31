@@ -110,19 +110,11 @@ export function adapter(env, Datastore) {
         .map(sortDocs(descending))
         .map((docs) => ({ ok: true, docs }))
         .toPromise(),
-    bulkDocuments: ({ db, docs }) => {
-      const dbFile = dbFullname(db);
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFile });
-      return bulk({ db, docs })
+    bulkDocuments: ({ db, docs }) =>
+      Async.of(db)
+        .chain(doloadDb)
+        .chain(db => bulk({ db, docs }))
         .map((results) => ({ ok: true, results }))
-        .toPromise();
-    },
+        .toPromise()
   });
 }
