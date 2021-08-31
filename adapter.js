@@ -11,6 +11,9 @@ import {
   doInsert,
   doRemoveOne,
   doUpdateOne,
+  filterKeys,
+  filterStart,
+  filterEnd,
   formatError,
   handleExists,
   loadDb,
@@ -18,6 +21,9 @@ import {
   removeDb,
   setId,
   swap,
+  limitDocs,
+  omitInternalIds,
+  sortDocs
 } from "./utils.js";
 
 const ENV = Deno.env.get("DENO_ENV");
@@ -87,10 +93,23 @@ export function adapter(env, Datastore) {
         .toPromise(),
     indexDocuments: ({ db, name, fields }) =>
       Async.of(db)
-        .map(getDbFile)
         .chain(doloadDb)
         .map(always({ ok: true }))
         .toPromise(),
+    listDocuments: ({ db, keys, startkey, endkey, limit, descending }) =>
+      Async.of(db)
+        .chain(doloadDb)
+        .chain(doFind({ selector: {} }))
+        .map(_ => (console.log('start: ', startkey), _))
+        .map(filterKeys(keys))
+        .map(filterStart(startkey))
+        .map(filterEnd(endkey))
+        .map(limitDocs(limit))
+        .map(omitInternalIds)
+        .map(sortDocs(descending))
+        .map((docs) => ({ ok: true, docs }))
+        .toPromise()
+    ,
     bulkDocuments: ({ db, docs }) => {
       const dbFile = dbFullname(db);
       if (ENV !== "test" && !existsSync(dbFile)) {
@@ -105,35 +124,6 @@ export function adapter(env, Datastore) {
         .map((results) => ({ ok: true, results }))
         .toPromise();
     },
-    listDocuments: async (d) => {
-      let { db } = d;
-      const dbFile = dbFullname(db);
-      if (ENV !== "test" && !existsSync(dbFile)) {
-        return Promise.reject({
-          ok: false,
-          status: 404,
-          msg: "database not found!",
-        });
-      }
-      db = new Datastore({ filename: dbFile });
-      let results = await db.find();
 
-      if (d.keys) {
-        results = filter(({ _id }) => includes(_id, d.keys), results);
-      }
-
-      if (d.start) {
-        results = filter(propSatisfies(gte(__, d.start), "_id"), results);
-      }
-      if (d.end) {
-        results = reject(propSatisfies(gt(__, d.end), "_id"), results);
-      }
-      // handle limit argument
-      if (d.limit) {
-        results = take(Number(d.limit), results);
-      }
-
-      return Promise.resolve({ ok: true, docs: results });
-    },
   });
 }
