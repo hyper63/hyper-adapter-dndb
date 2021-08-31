@@ -23,6 +23,7 @@ const {
   sortWith,
   ascend,
   descend,
+  pluck,
 } = R;
 
 const { Async, tryCatch, resultToAsync } = crocks;
@@ -122,3 +123,5 @@ export const omitInternalIds = map(omit(["_id"]));
 
 export const sortDocs = (descending) =>
   descending ? sortWith([descend(prop("id"))]) : sortWith([ascend(prop("id"))]);
+
+export const pluckDocs = (fields) => fields ? pluck(fields) : identity;
