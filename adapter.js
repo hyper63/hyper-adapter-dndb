@@ -23,6 +23,7 @@ import {
   removeDb,
   setId,
   sortDocs,
+  sortDocsBy,
   swap,
 } from "./utils.js";
 
@@ -93,6 +94,7 @@ export function adapter(env, Datastore) {
         .chain(doloadDb)
         .chain(doFind(query))
         .map(pluckDocs(query.fields))
+        .map(sortDocsBy(query.sort))
         .map(limitDocs(query.limit))
         .map((docs) => ({ ok: true, docs }))
         .toPromise(),

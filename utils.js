@@ -125,3 +125,15 @@ export const sortDocs = (descending) =>
   descending ? sortWith([descend(prop("id"))]) : sortWith([ascend(prop("id"))]);
 
 export const pluckDocs = (fields) => fields ? pluck(fields) : identity;
+export const sortDocsBy = (sort) =>
+  sort
+    ? sortWith(
+      map(
+        compose(
+          ([k, v]) => v === 'DESC' ? descend(prop(k)) : ascend(prop(k)),
+          flatten,
+          toPairs
+        ), sort
+      ),
+    )
+    : identity;
