@@ -22,7 +22,7 @@ const {
   map,
   sortWith,
   ascend,
-  descend
+  descend,
 } = R;
 
 const { Async, tryCatch, resultToAsync } = crocks;
@@ -105,24 +105,20 @@ export const checkDoc = (doc) =>
       })
       : Async.Resolved(db);
 
-export const filterKeys = keys => keys
-  ? filter(compose(includes(__, split(',', keys)), prop('_id')))
-  : identity
+export const filterKeys = (keys) =>
+  keys
+    ? filter(compose(includes(__, split(",", keys)), prop("_id")))
+    : identity;
 
-export const filterStart = start => start
-  ? filter(propSatisfies(gte(__, start), "_id"))
-  : identity
+export const filterStart = (start) =>
+  start ? filter(propSatisfies(gte(__, start), "_id")) : identity;
 
-export const filterEnd = end => end
-  ? reject(propSatisfies(gt(__, end), "_id"))
-  : identity
+export const filterEnd = (end) =>
+  end ? reject(propSatisfies(gt(__, end), "_id")) : identity;
 
-export const limitDocs = limit => limit
-  ? take(limit)
-  : take(1000)
+export const limitDocs = (limit) => limit ? take(limit) : take(1000);
 
-export const omitInternalIds = map(omit(['_id']))
+export const omitInternalIds = map(omit(["_id"]));
 
-export const sortDocs = (descending) => descending
-  ? sortWith([descend(prop('id'))])
-  : sortWith([ascend(prop('id'))])
+export const sortDocs = (descending) =>
+  descending ? sortWith([descend(prop("id"))]) : sortWith([ascend(prop("id"))]);

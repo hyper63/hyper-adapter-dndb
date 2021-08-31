@@ -11,25 +11,26 @@ import {
   doInsert,
   doRemoveOne,
   doUpdateOne,
+  filterEnd,
   filterKeys,
   filterStart,
-  filterEnd,
   formatError,
   handleExists,
+  limitDocs,
   loadDb,
   mapResult,
+  omitInternalIds,
   removeDb,
   setId,
+  sortDocs,
   swap,
-  limitDocs,
-  omitInternalIds,
-  sortDocs
 } from "./utils.js";
 
 const ENV = Deno.env.get("DENO_ENV");
 const {
   __,
   always,
+  map,
   filter,
   gt,
   gte,
@@ -100,16 +101,15 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind({ selector: {} }))
-        .map(_ => (console.log('start: ', startkey), _))
+        .map((_) => (console.log("start: ", startkey), _))
         .map(filterKeys(keys))
         .map(filterStart(startkey))
         .map(filterEnd(endkey))
         .map(limitDocs(limit))
-        .map(omitInternalIds)
+        .map(map(swap("_id", "id")))
         .map(sortDocs(descending))
         .map((docs) => ({ ok: true, docs }))
-        .toPromise()
-    ,
+        .toPromise(),
     bulkDocuments: ({ db, docs }) => {
       const dbFile = dbFullname(db);
       if (ENV !== "test" && !existsSync(dbFile)) {
@@ -124,6 +124,5 @@ export function adapter(env, Datastore) {
         .map((results) => ({ ok: true, results }))
         .toPromise();
     },
-
   });
 }
