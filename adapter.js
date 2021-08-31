@@ -105,9 +105,9 @@ export function adapter(env, Datastore) {
         .map(filterKeys(keys))
         .map(filterStart(startkey))
         .map(filterEnd(endkey))
-        .map(limitDocs(limit))
         .map(map(swap("_id", "id")))
         .map(sortDocs(descending))
+        .map(limitDocs(limit))
         .map((docs) => ({ ok: true, docs }))
         .toPromise(),
     bulkDocuments: ({ db, docs }) => {
