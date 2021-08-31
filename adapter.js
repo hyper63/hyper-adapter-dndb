@@ -19,10 +19,11 @@ import {
   limitDocs,
   loadDb,
   mapResult,
-  omitInternalIds,
+  pluckDocs,
   removeDb,
   setId,
   sortDocs,
+  sortDocsBy,
   swap,
 } from "./utils.js";
 
@@ -92,6 +93,9 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind(query))
+        .map(pluckDocs(query.fields))
+        .map(sortDocsBy(query.sort))
+        .map(limitDocs(query.limit))
         .map((docs) => ({ ok: true, docs }))
         .toPromise(),
     indexDocuments: ({ db, name, fields }) =>
@@ -103,13 +107,12 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind({ selector: {} }))
-        .map((_) => (console.log("start: ", startkey), _))
         .map(filterKeys(keys))
         .map(filterStart(startkey))
         .map(filterEnd(endkey))
-        .map(limitDocs(limit))
         .map(map(swap("_id", "id")))
         .map(sortDocs(descending))
+        .map(limitDocs(limit))
         .map((docs) => ({ ok: true, docs }))
         .toPromise(),
     bulkDocuments: ({ db, docs }) =>
