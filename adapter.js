@@ -93,6 +93,7 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind(query))
+        .map(map(swap("_id", "id")))
         .map(pluckDocs(query.fields))
         .map(sortDocsBy(query.sort))
         .map(limitDocs(query.limit))
