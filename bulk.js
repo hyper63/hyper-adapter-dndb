@@ -56,6 +56,5 @@ export function bulk({ db, docs }) {
       map(
         ifElse(isDeleted, remove, ifElse(isNew, insert, update)),
       ),
-      (v) => (console.log(v), v),
     ));
 }

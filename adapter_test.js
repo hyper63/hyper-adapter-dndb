@@ -20,13 +20,16 @@ function Datastore(config) {
       }
     },
     updateOne: (criteria, action) => {
-      console.log(action);
       return Promise.resolve(action.$set);
     },
     removeOne: (o) => Promise.resolve(o),
     find: () =>
       Promise.resolve([
-        { _id: "movie-1", type: "movie", title: "Ghostbusters" },
+        { _id: "movie-1", type: "movie", title: "ghostbusters" },
+        { _id: "movie-2", type: "movie", title: "great outdoors" },
+        { _id: "movie-3", type: "movie", title: "groundhog day" },
+        { _id: "movie-4", type: "movie", title: "what about bob?" },
+        { _id: "movie-5", type: "movie", title: "spaceballs" },
       ]),
     update: (criteria, action) => Promise.resolve(action.$set),
     remove: (critera) => Promise.resolve({ ok: true }),
@@ -122,7 +125,25 @@ test("query documents - with fields", async () => {
     },
   });
   assertEquals(result.ok, true);
-  assertEquals(result.docs[0].title, "Ghostbusters");
+  assertEquals(result.docs[0].title, "ghostbusters");
+});
+
+test("query documents - with sort", async () => {
+  await a.createDocument({
+    db: "foo",
+    id: "movie-1",
+    doc: { id: "movie-1", type: "movie", title: "Great Outdoors" },
+  });
+
+  const result = await a.queryDocuments({
+    db: "foo",
+    query: {
+      selector: { type: "movie" },
+      sort: [{ type: "ASC" }, { title: "DESC" }],
+    },
+  });
+  assertEquals(result.ok, true);
+  assertEquals(result.docs[0].title, "what about bob?");
 });
 
 test("index documents", async () => {
