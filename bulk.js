@@ -32,8 +32,8 @@ export function bulk({ db, docs }) {
     omit(["_new"]),
   );
   const update = (doc) =>
-    Async.fromPromise(db.update.bind(db))(prop("_id", doc), { $set: doc })
-      .map((r) => ({ ok: true, id: doc._id }));
+    Async.fromPromise(db.updateOne.bind(db))({ _id: doc._id }, { $set: doc })
+      .map((r) => ({ ok: true, id: doc._id, updated: true }));
 
   const findOne = Async.fromPromise(db.findOne.bind(db));
   const flagNew = (doc) =>
@@ -56,5 +56,6 @@ export function bulk({ db, docs }) {
       map(
         ifElse(isDeleted, remove, ifElse(isNew, insert, update)),
       ),
+      (v) => (console.log(v), v),
     ));
 }

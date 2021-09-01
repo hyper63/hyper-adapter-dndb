@@ -93,9 +93,10 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind(query))
+        .map((v) => (console.log(v), v))
         .map(pluckDocs(query.fields))
-        .map(sortDocsBy(query.sort))
-        .map(limitDocs(query.limit))
+        //.map(sortDocsBy(query.sort))
+        //.map(limitDocs(query.limit))
         .map((docs) => ({ ok: true, docs }))
         .toPromise(),
     indexDocuments: ({ db, name, fields }) =>

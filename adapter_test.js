@@ -6,14 +6,28 @@ import { assertEquals } from "./dev_deps.js";
 function Datastore(config) {
   return Object.freeze({
     insert: (doc) => Promise.resolve(doc),
-    findOne: ({ _id }) =>
-      _id === "1"
-        ? Promise.resolve({ _id: "1", hello: "world" })
-        : Promise.resolve(null),
-    updateOne: (criteria, action) =>
-      Promise.resolve({ _id: "1", hello: "moon" }),
+    findOne: ({ _id }) => {
+      if (_id === "1") {
+        return Promise.resolve({ _id: "1", hello: "world" });
+      } else if (_id === "movie-4") {
+        return Promise.resolve({
+          _id: "movie-4",
+          type: "movie",
+          title: "what about bob?",
+        });
+      } else {
+        return Promise.resolve(null);
+      }
+    },
+    updateOne: (criteria, action) => {
+      console.log(action);
+      return Promise.resolve(action.$set);
+    },
     removeOne: (o) => Promise.resolve(o),
-    find: () => Promise.resolve([]),
+    find: () =>
+      Promise.resolve([
+        { _id: "movie-1", type: "movie", title: "Ghostbusters" },
+      ]),
     update: (criteria, action) => Promise.resolve(action.$set),
     remove: (critera) => Promise.resolve({ ok: true }),
   });
@@ -79,7 +93,7 @@ test("list documents", async () => {
 test("query documents", async () => {
   await a.createDocument({
     db: "foo",
-    id: "movid-1",
+    id: "movie-1",
     doc: { id: "movie-1", type: "movie", title: "Great Outdoors" },
   });
 
@@ -91,6 +105,24 @@ test("query documents", async () => {
   });
 
   assertEquals(result.ok, true);
+});
+
+test("query documents - with fields", async () => {
+  await a.createDocument({
+    db: "foo",
+    id: "movie-1",
+    doc: { id: "movie-1", type: "movie", title: "Great Outdoors" },
+  });
+
+  const result = await a.queryDocuments({
+    db: "foo",
+    query: {
+      selector: { type: "movie" },
+      fields: ["title"],
+    },
+  });
+  assertEquals(result.ok, true);
+  assertEquals(result.docs[0].title, "Ghostbusters");
 });
 
 test("index documents", async () => {
@@ -106,12 +138,13 @@ test("bulk update/insert/remove documents", async () => {
   const result = await a.bulkDocuments({
     db: "foo",
     docs: [
-      { id: "movie-1", type: "movie", name: "ghostbusters", _deleted: true },
-      { id: "movie-2", type: "movie", name: "great outdoors" },
-      { id: "movie-3", type: "movie", name: "groundhog day" },
-      { id: "movie-4", type: "movie", name: "what about bob?" },
-      { id: "movie-5", type: "movie", name: "spaceballs" },
+      { id: "movie-1", type: "movie", title: "ghostbusters", _deleted: true },
+      { id: "movie-2", type: "movie", title: "great outdoors" },
+      { id: "movie-3", type: "movie", title: "groundhog day" },
+      { id: "movie-4", type: "movie", title: "what about bob?" },
+      { id: "movie-5", type: "movie", title: "spaceballs" },
     ],
   });
+
   assertEquals(result.ok, true);
 });

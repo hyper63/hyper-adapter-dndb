@@ -9,6 +9,7 @@ const {
   omit,
   propOr,
   isEmpty,
+  flatten,
   filter,
   prop,
   includes,
@@ -21,9 +22,10 @@ const {
   take,
   map,
   sortWith,
+  toPairs,
   ascend,
   descend,
-  pluck,
+  pick,
 } = R;
 
 const { Async, tryCatch, resultToAsync } = crocks;
@@ -124,16 +126,18 @@ export const omitInternalIds = map(omit(["_id"]));
 export const sortDocs = (descending) =>
   descending ? sortWith([descend(prop("id"))]) : sortWith([ascend(prop("id"))]);
 
-export const pluckDocs = (fields) => fields ? pluck(fields) : identity;
+export const pluckDocs = (fields) =>
+  fields ? map(pick(["_id", ...fields])) : identity;
 export const sortDocsBy = (sort) =>
   sort
     ? sortWith(
       map(
         compose(
-          ([k, v]) => v === 'DESC' ? descend(prop(k)) : ascend(prop(k)),
+          ([k, v]) => v === "DESC" ? descend(prop(k)) : ascend(prop(k)),
           flatten,
-          toPairs
-        ), sort
+          toPairs,
+        ),
+        sort,
       ),
     )
     : identity;
