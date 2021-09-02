@@ -28,14 +28,14 @@ https://dndb.crawford.ml/docs
 ## Getting Started
 
 ```js
-import { default as dndb } from "https://x.nest.land/hyper-adapter-dndb@0.0.2/mod.js";
+import { default as dndb } from "https://x.nest.land/hyper-adapter-dndb@1.0.0/mod.js";
 
 export default {
   app: opine,
   adapter: [
     {
       port: "data",
-      plugins: [dndb()],
+      plugins: [dndb({ dir: "/tmp" })],
     },
   ],
 };
