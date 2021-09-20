@@ -1,6 +1,9 @@
 image:
   file: .gitpod.Dockerfile
 
+tasks:
+  - init: git config core.hooksPath .hooks
+
 github:
   prebuilds:
     # enable for the default branch (defaults to true)
