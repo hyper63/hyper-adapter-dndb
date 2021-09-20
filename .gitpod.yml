@@ -2,7 +2,9 @@ image:
   file: .gitpod.Dockerfile
 
 tasks:
-  - init: git config core.hooksPath .hooks
+  - init: |
+      git config core.hooksPath .hooks
+      clear
 
 github:
   prebuilds:
@@ -20,4 +22,3 @@ github:
     addComment: true
     # add a "Review in Gitpod" button to the pull request's description (defaults to false)
     addBadge: false
-    
