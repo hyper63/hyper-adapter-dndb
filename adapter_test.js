@@ -58,7 +58,6 @@ test("create document", async () => {
     id: "2",
     doc: { hello: "world" },
   });
-  console.log(result);
   assertEquals(result.ok, true);
 });
 

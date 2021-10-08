@@ -2,6 +2,7 @@
 
 import { crocks, existsSync, R } from "./deps.js";
 import { bulk } from "./bulk.js";
+import { deepSwap } from "./deep-swap.js";
 import {
   checkDoc,
   createDb,
@@ -93,7 +94,7 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind(query))
-        .map(map(swap("_id", "id")))
+        .map(map(deepSwap("_id", "id")))
         .map(pluckDocs(query.fields))
         .map(sortDocsBy(query.sort))
         .map(limitDocs(query.limit))
