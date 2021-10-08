@@ -2,6 +2,7 @@
 
 import { crocks, deepSwap, R } from "./deps.js";
 import { bulk } from "./bulk.js";
+import { deepSwap } from "./deep-swap.js";
 import {
   checkDoc,
   createDb,
