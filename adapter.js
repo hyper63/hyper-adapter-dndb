@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-unused-vars
 
-import { crocks, existsSync, R } from "./deps.js";
+import { crocks, deepSwap, R } from "./deps.js";
 import { bulk } from "./bulk.js";
+
 import {
   checkDoc,
   createDb,
@@ -34,13 +35,6 @@ const {
   map,
   over,
   lensProp,
-  filter,
-  gt,
-  gte,
-  includes,
-  propSatisfies,
-  reject,
-  take,
 } = R;
 const { Async } = crocks;
 
@@ -93,7 +87,7 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind(query))
-        .map(map(swap("_id", "id")))
+        .map(map(deepSwap("_id", "id")))
         .map(pluckDocs(query.fields))
         .map(sortDocsBy(query.sort))
         .map(limitDocs(query.limit))
