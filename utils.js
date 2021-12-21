@@ -36,8 +36,6 @@ export const checkIfExists = (n) =>
     ? Async.Resolved(n)
     : Async.Rejected({ ok: false, status: 400, msg: "Database not found!" });
 
-export const swap = (a, b) =>
-  compose(omit([a]), (doc) => assoc(b, doc[a], doc));
 export const removeDb = (name) =>
   Async.fromPromise(Deno.remove.bind(Deno))(name);
 export const formatError = (e) => ({ ok: false, message: e.message });
@@ -124,10 +122,12 @@ export const limitDocs = (limit) => limit ? take(limit) : take(1000);
 export const omitInternalIds = map(omit(["_id"]));
 
 export const sortDocs = (descending) =>
-  descending ? sortWith([descend(prop("id"))]) : sortWith([ascend(prop("id"))]);
+  descending
+    ? sortWith([descend(prop("_id"))])
+    : sortWith([ascend(prop("_id"))]);
 
 export const pluckDocs = (fields) =>
-  fields ? map(pick(["id", ...fields])) : identity;
+  fields ? map(pick(["_id", ...fields])) : identity;
 
 export const sortDocsBy = (sort) =>
   sort

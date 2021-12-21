@@ -67,14 +67,14 @@ test("retrieve document", async () => {
     id: "1",
   });
 
-  assertEquals(result.id, "1");
+  assertEquals(result._id, "1");
 });
 
 test("update document", async () => {
   const result = await a.updateDocument({
     db: "foo",
     id: "1",
-    doc: { id: "1", hello: "moon" },
+    doc: { _id: "1", hello: "moon" },
   });
   assertEquals(result.ok, true);
 });
@@ -96,7 +96,7 @@ test("query documents", async () => {
   await a.createDocument({
     db: "foo",
     id: "movie-1",
-    doc: { id: "movie-1", type: "movie", title: "Great Outdoors" },
+    doc: { _id: "movie-1", type: "movie", title: "Great Outdoors" },
   });
 
   const result = await a.queryDocuments({
@@ -113,7 +113,7 @@ test("query documents - with fields", async () => {
   await a.createDocument({
     db: "foo",
     id: "movie-1",
-    doc: { id: "movie-1", type: "movie", title: "Great Outdoors" },
+    doc: { _id: "movie-1", type: "movie", title: "Great Outdoors" },
   });
 
   const result = await a.queryDocuments({
@@ -131,7 +131,7 @@ test("query documents - with sort", async () => {
   await a.createDocument({
     db: "foo",
     id: "movie-1",
-    doc: { id: "movie-1", type: "movie", title: "Great Outdoors" },
+    doc: { _id: "movie-1", type: "movie", title: "Great Outdoors" },
   });
 
   const result = await a.queryDocuments({
@@ -158,11 +158,11 @@ test("bulk update/insert/remove documents", async () => {
   const result = await a.bulkDocuments({
     db: "foo",
     docs: [
-      { id: "movie-1", type: "movie", title: "ghostbusters", _deleted: true },
-      { id: "movie-2", type: "movie", title: "great outdoors" },
-      { id: "movie-3", type: "movie", title: "groundhog day" },
-      { id: "movie-4", type: "movie", title: "what about bob?" },
-      { id: "movie-5", type: "movie", title: "spaceballs" },
+      { _id: "movie-1", type: "movie", title: "ghostbusters", _deleted: true },
+      { _id: "movie-2", type: "movie", title: "great outdoors" },
+      { _id: "movie-3", type: "movie", title: "groundhog day" },
+      { _id: "movie-4", type: "movie", title: "what about bob?" },
+      { _id: "movie-5", type: "movie", title: "spaceballs" },
     ],
   });
 

@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-unused-vars
 
-import { crocks, deepSwap, R } from "./deps.js";
+import { crocks, R } from "./deps.js";
 import { bulk } from "./bulk.js";
 
 import {
@@ -25,12 +25,10 @@ import {
   setId,
   sortDocs,
   sortDocsBy,
-  swap,
 } from "./utils.js";
 
 const ENV = Deno.env.get("DENO_ENV");
 const {
-  __,
   always,
   map,
   over,
@@ -68,13 +66,12 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFindOne(id))
-        .map(swap("_id", "id"))
         .toPromise(),
     updateDocument: ({ db, id, doc }) =>
       Async.of(db)
         .chain(checkDoc(doc))
         .chain(doloadDb)
-        .chain(doUpdateOne(id, swap("id", "_id")(doc)))
+        .chain(doUpdateOne(id, doc))
         .map(always({ ok: true }))
         .toPromise(),
     removeDocument: ({ db, id }) =>
@@ -87,7 +84,6 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .chain(doFind(query))
-        .map(map(deepSwap("_id", "id")))
         .map(pluckDocs(query.fields))
         .map(sortDocsBy(query.sort))
         .map(limitDocs(query.limit))
@@ -105,7 +101,6 @@ export function adapter(env, Datastore) {
         .map(filterKeys(keys))
         .map(filterStart(startkey))
         .map(filterEnd(endkey))
-        .map(map(swap("_id", "id")))
         .map(sortDocs(descending))
         .map(limitDocs(limit))
         .map((docs) => ({ ok: true, docs }))
@@ -114,7 +109,13 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .map((db) => ({ db, docs }))
-        .map(over(lensProp("docs"), map(swap("id", "_id"))))
+        .map(over(
+          lensProp("docs"),
+          map((doc) => ({
+            ...doc,
+            _id: doc._id || doc.id,
+          })),
+        ))
         .chain(bulk)
         .map((results) => ({ ok: true, results }))
         .toPromise(),
