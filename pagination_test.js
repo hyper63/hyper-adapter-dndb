@@ -78,11 +78,11 @@ test("pagination with adapter", async () => {
   // since we will know the last item on the page we will ask for a total count of 3
   // and exclude the first item if the page num is greater than zero
   const page1 = await first(a, 2);
-  const page2 = await next(a, page1[1].id, 2);
-  const page1a = await prev(a, page2[0].id, 2);
-  assertEquals(page1[0].id, "1");
-  assertEquals(page2[0].id, "3");
-  assertEquals(page1a[0].id, "1");
+  const page2 = await next(a, page1[1]._id, 2);
+  const page1a = await prev(a, page2[0]._id, 2);
+  assertEquals(page1[0]._id, "1");
+  assertEquals(page2[0]._id, "3");
+  assertEquals(page1a[0]._id, "1");
 });
 
 async function first(a, limit) {
