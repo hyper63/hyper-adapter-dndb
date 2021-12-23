@@ -5,7 +5,7 @@
   "description": "Hyper Data port adapter for dndb",
   "homepage": "https://github.com/hyper63/hyper-adapter-dndb",
   "repo": "https://github.com/hyper63/hyper-adapter-dndb",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "unstable": false,
   "unlisted": false,
   "files": [
