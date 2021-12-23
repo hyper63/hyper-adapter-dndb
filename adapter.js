@@ -109,13 +109,6 @@ export function adapter(env, Datastore) {
       Async.of(db)
         .chain(doloadDb)
         .map((db) => ({ db, docs }))
-        .map(over(
-          lensProp("docs"),
-          map((doc) => ({
-            ...doc,
-            _id: doc._id || doc.id,
-          })),
-        ))
         .chain(bulk)
         .map((results) => ({ ok: true, results }))
         .toPromise(),
