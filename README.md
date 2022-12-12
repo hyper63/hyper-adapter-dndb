@@ -7,6 +7,8 @@
   <a href="https://github.com/hyper63/hyper-adapter-dndb/tags/"><img src="https://img.shields.io/github/tag/hyper63/hyper-adapter-dndb" alt="Current Version" /></a>
 </p>
 
+> **Deprecation Notice**: Besides not being able to support the hyper data api, **DnDB** and it's influence, `NeDB`, are both not actively maintained. We are no longer maintaining this adapter. Check out [the PouchDB Data Adapter](https://github.com/hyper63/hyper-adapter-pouchdb) for an alternative "local" hyper adapter
+
 ---
 
 ## Table of Contents
